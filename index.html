@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101820">
+<title>VAR-LFJ</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101820;color:white;font-family:Arial,sans-serif;text-align:center}
+header{padding:18px;background:#17242e;font-size:25px;font-weight:bold}
+header span{color:#38e58a}
+main{padding:15px}
+.score{display:flex;justify-content:space-around;align-items:center;font-size:22px}
+.score strong{font-size:45px}
+button,select,input{font-size:16px;padding:12px;margin:5px;border:0;border-radius:9px}
+button{background:#263b49;color:white}
+.green{background:#087b46}
+.red{background:#b52335}
+.yellow{background:#e6b928;color:#111}
+#clock{font-size:40px;margin:18px}
+.field{position:relative;background:#167d43;border:3px solid white;margin:15px auto;width:100%;max-width:360px;height:270px}
+.mid{position:absolute;left:0;right:0;top:50%;border-top:2px solid white}
+.circle{position:absolute;width:80px;height:80px;border:2px solid white;border-radius:50%;top:calc(50% - 40px);left:calc(50% - 40px)}
+.box1,.box2{position:absolute;width:44%;height:55px;border:2px solid white;left:28%}
+.box1{top:0;border-top:0}.box2{bottom:0;border-bottom:0}
+h3{margin-bottom:5px}
+#log{background:#17242e;padding:10px;border-radius:8px;text-align:left;min-height:40px}
+</style>
+</head>
+<body>
+<header>⚽ <span>VAR</span>-LFJ</header>
+<main>
+<h3>ASISTENCIA ARBITRAL</h3>
+<input id="home" value="LOCAL" aria-label="Equipo local">
+<input id="away" value="VISITANTE" aria-label="Equipo visitante">
+<div class="score">
+<div><div id="hn">LOCAL</div><strong id="hs">0</strong></div>
+<div>VS</div>
+<div><div id="an">VISITANTE</div><strong id="as">0</strong></div>
+</div>
+<div id="clock">00:00</div>
+<button class="green" onclick="start()">▶ INICIAR</button>
+<button onclick="pause()">⏸ PAUSAR</button>
+<button class="red" onclick="reset()">↻ REINICIAR</button>
+<div class="field"><div class="mid"></div><div class="circle"></div><div class="box1"></div><div class="box2"></div></div>
+<h3>DECISIONES ARBITRALES</h3>
+<button class="green" onclick="goal(0)">⚽ GOL LOCAL</button>
+<button class="green" onclick="goal(1)">⚽ GOL VISITANTE</button><br>
+<button class="yellow" onclick="card('Amarilla')">🟨 AMARILLA</button>
+<button class="red" onclick="card('Roja')">🟥 ROJA</button><br>
+<button onclick="review('Posible penalti')">🎥 PENALTI</button>
+<button onclick="review('Posible fuera de juego')">🚩 FUERA DE JUEGO</button>
+<button onclick="review('Posible gol')">🥅 REVISAR GOL</button>
+<h3>REGISTRO DEL PARTIDO</h3>
+<div id="log">El partido aún no ha comenzado.</div>
+<button onclick="clearLog()">BORRAR REGISTRO</button>
+</main>
+<script>
+let seconds=0,timer=null,started=false;
+let scores=[0,0];
+function showClock(){
+document.getElementById('clock').textContent=
+String(Math.floor(seconds/60)).padStart(2,'0')+':'+
+String(seconds%60).padStart(2,'0');
+}
+function start(){
+if(timer)return;
+started=true;
+timer=setInterval(()=>{seconds++;showClock()},1000);
+add('Cronómetro iniciado');
+}
+function pause(){if(timer){clearInterval(timer);timer=null;add('Cronómetro pausado')}}
+function reset(){
+pause();seconds=0;scores=[0,0];showClock();
+document.getElementById('hs').textContent=0;
+document.getElementById('as').textContent=0;
+add('Marcador reiniciado');
+}
+function add(msg){
+let log=document.getElementById('log');
+if(log.textContent==='El partido aún no ha comenzado.')log.textContent='';
+log.innerHTML+='<div>'+showTime()+' — '+msg+'</div>';
+}
+function showTime(){return document.getElementById('clock').textContent}
+function goal(team){
+scores[team]++;
+document.getElementById(team===0?'hs':'as').textContent=scores[team];
+add('⚽ Gol: '+(team===0?document.getElementById('home').value:document.getElementById('away').value));
+}
+function card(type){add('Tarjeta '+type+' — anota el jugador manualmente');}
+function review(type){add('REVISIÓN: '+type+'. Decisión pendiente del árbitro.');}
+function clearLog(){document.getElementById('log').textContent='Registro borrado.';}
+document.getElementById('home').addEventListener('input',e=>document.getElementById('hn').textContent=e.target.value);
+document.getElementById('away').addEventListener('input',e=>document.getElementById('an').textContent=e.target.value);
+showClock();
+</script>
+</body>
+</html>
