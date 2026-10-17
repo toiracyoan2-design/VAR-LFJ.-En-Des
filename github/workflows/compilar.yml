@@ -1,0 +1,58 @@
+name: Compilar APK VAR-LFJ
+
+on:
+workflow_dispatch:
+
+jobs:
+build:
+runs-on: ubuntu-latest
+steps:
+- name: Descargar proyecto
+uses: actions/checkout@v4
+
+  - name: Preparar Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
+
+  - name: Preparar Android
+    uses: android-actions/setup-android@v3
+
+  - name: Crear proyecto Android
+    run: |
+      mkdir -p app/src/main/assets app/src/main/java/com/varlfj/app
+      cp index.html app/src/main/assets/index.html
+      echo "sdk.dir=$ANDROID_HOME" > local.properties
+      echo "include ':app'" > settings.gradle
+      echo "plugins { id 'com.android.application' version '8.7.3' }; android { namespace 'com.varlfj.app'; compileSdk 35; defaultConfig { applicationId 'com.varlfj.app'; minSdk 23; targetSdk 28; versionCode 1; versionName '1.0' } }" > build.gradle
+      echo "plugins { id 'com.android.application' }" > app/build.gradle
+      echo "org.gradle.jvmargs=-Xmx2048m" > gradle.properties
+      cat > app/src/main/AndroidManifest.xml <<'EOF'
+      <manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:theme="@android:style/Theme.Material.Light.NoActionBar" android:label="VAR-LFJ" android:usesCleartextTraffic="true"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>
+      EOF
+      cat > app/src/main/java/com/varlfj/app/MainActivity.java <<'EOF'
+      package com.varlfj.app;
+      import android.app.Activity;
+      import android.os.Bundle;
+      import android.webkit.WebView;
+      import android.webkit.WebSettings;
+      public class MainActivity extends Activity {
+        public void onCreate(Bundle b) {
+          super.onCreate(b);
+          WebView w = new WebView(this);
+          WebSettings s = w.getSettings();
+          s.setJavaScriptEnabled(true);
+          w.loadUrl("file:///android_asset/index.html");
+          setContentView(w);
+        }
+      }
+      EOF
+      gradle wrapper --gradle-version 8.9
+      ./gradlew assembleDebug
+
+  - name: Guardar APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: VAR-LFJ-APK
+      path: app/build/outputs/apk/debug/app-debug.apk
